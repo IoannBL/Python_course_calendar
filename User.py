@@ -11,7 +11,6 @@ class User:
         self._password = hashlib.sha256(password.encode()).hexdigest()
         self._id = f"@{str(self._login)}{str(User.id_count)}"
         User.id_count +=1
-
     
     # def __str__(self):
     #     return f"name:{self._name}, password:{self._password}, id:{self._id}"

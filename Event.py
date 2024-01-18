@@ -35,18 +35,24 @@ class Event:
     # def __str__(self):
     #     return f"{self._title},{self._frequency},{self._participants},{self._description}"
     def __repr__(self):
-        return f"Event('{self._title}', {self._participants}, {self._description})"
+        return f"Event('{self._title}',организатор: {self._organizer}, участники: {self._participants}, описание: {self._description}, даты проведения: {self._frequency})"
    
-    def get_title(self, title):
-        return title
+    def get_title(self):
+        return self._title
     
     def get_organizer(self):
         return self._organizer
+    def get_participants(self):
+        return self._participants
+    def get_description(self):
+        return self._description
     def get_frequency_event(self):
         return self._frequency
     
-    def create_periodic_event(self, start_date, frequency, format = "%Y,%m,%d"):
+    def create_periodic_event(self, start_date, frequency, format = "%Y-%m-%d"):
         '''Метод задает частоту события на 5 лет вперед начиная с установленной даты первого события.'''
+        if isinstance(start_date, datetime.date):
+            start_date = start_date.strftime(format)
         start_date = datetime.datetime.strptime(start_date, format)
         end_date = start_date + datetime.timedelta(days=365 * 2)
         if frequency == "once":
@@ -71,11 +77,10 @@ class Event:
             self._participants.add(participant)
         else:
             raise ValueError("Некорректные участники события.")
-    def get_participants(self):
-        return self._participants
+
     
-    def del_participants(self,admin,user):
-        if admin == self._organizer and user in self._participants:
+    def del_participants(self,event_name, admin, user):
+        if admin == self._organizer and event_name == self._title and user in self._participants:
             self._participants.remove(user)
         else:
             raise ValueError("Некорректные участники события")
@@ -101,7 +106,7 @@ class Event:
             'title': self._title,
             'organizer': self._organizer.to_dict(),
             'description': self._description,
-            'participants': [participant.to_dict() for participant in self._participants],
+            'participants': [{'name': participant.get_name(),'id': participant.get_id()} for participant in self._participants],
             'frequency': [dt.strftime("%Y-%m-%d") for dt in self._frequency]
         }
         return event_dict
@@ -115,10 +120,15 @@ class Event:
     @classmethod
     def from_dict(cls, event_dict):
         title = event_dict.get('title')
-        organizer = User.from_dict(event_dict.get('organizer'))
+        organizer_data = event_dict.get('organizer', {})
+        organizer = User.from_dict(organizer_data)
         description = event_dict.get('description')
-        participants = {User.from_dict(participant) for participant in event_dict.get('participants', [])}
+        
+        participants_data = event_dict.get('participants', [])
+        participants = {User.from_dict(participant) for participant in participants_data}
+
         frequency = [datetime.datetime.strptime(dt, "%Y-%m-%d").date() for dt in event_dict.get('frequency', [])]
+        
         event = cls(title, organizer, description)
         event._participants = participants
         event._frequency = frequency

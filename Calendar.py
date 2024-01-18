@@ -9,12 +9,21 @@ from Event import Event
 import datetime
 class Calendar:
     
-    def __init__(self):
+    def __init__(self, organizer_cal, title_cal):
+        self._title_cal = title_cal
+        self._organizer_cal = organizer_cal
         self._calendar = {}
   
     def __str__(self):
-        return f"{self._calendar}"
-    def add_event(self, event):
+        return f"Календарь: {self._title_cal}, {self._organizer_cal}, {self._calendar}"
+    def __repr__(self):
+        return f"Календарь:{self._title_cal}, {self._organizer_cal}, {self._calendar}"
+    def get_calendar(self):
+        return self._title_cal, self._organizer_cal, self._calendar
+    
+    def get_organizer_cal(self):
+        return self._organizer_cal
+    def add_event_cal(self, event):
         if not isinstance(event, Event):
             raise ValueError("event не является экземпляром класса Event или его подкласса.")
         event_dat = event.get_frequency_event()
@@ -48,12 +57,12 @@ class Calendar:
     # result = [i for i in self._calendar if start <= i.date() <= end]
 
     def del_event(self, user):
-        if user == self._organizer and isinstance(user, User):
+        if user == self._organizer_cal and isinstance(user, User):
             self._calendar.remove_event(self)
         else:
             raise ValueError("Только организатор может удалить событие")
         
         
-    
+
 
         

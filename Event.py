@@ -14,6 +14,7 @@
 Иметь покрытие тестами
 Комментарии на нетривиальных методах и в целом документация
 """
+import re
 import json
 import datetime
 from dateutil import rrule
@@ -21,31 +22,39 @@ from User import User
 import json
 
 class Event:
-    def __init__(self, title, organizer, description = None):
+    def __init__(self, title, organizer, description=None, participants=None, frequency=None):
         self._title = title
         self._organizer = organizer
         self._description = description
-        self._participants = set()
+        self._participants = participants if participants is not None else set()
         if isinstance(organizer, User):
             self._participants.add(organizer)
-        self._frequency = []
+        self._frequency = frequency if frequency is not None else []
 
         
-  
-    # def __str__(self):
-    #     return f"{self._title},{self._frequency},{self._participants},{self._description}"
     def __repr__(self):
-        return f"Event('{self._title}',организатор: {self._organizer}, участники: {self._participants}, описание: {self._description}, даты проведения: {self._frequency})"
-   
+        return f"('{self._title}',организатор: {self._organizer}, участники: {self._participants}, описание: {self._description}, даты проведения: {self._frequency})"
+    
+    def __eq__(self, other):
+        if isinstance(other, Event):
+            return (self._title == other._title and self._organizer == other._organizer)
+        return False
+    
+    def __hash__(self):
+        return hash((self._title, self._organizer))
+    
     def get_title(self):
         return self._title
     
     def get_organizer(self):
         return self._organizer
+    
     def get_participants(self):
         return self._participants
+    
     def get_description(self):
         return self._description
+    
     def get_frequency_event(self):
         return self._frequency
     
@@ -54,7 +63,7 @@ class Event:
         if isinstance(start_date, datetime.date):
             start_date = start_date.strftime(format)
         start_date = datetime.datetime.strptime(start_date, format)
-        end_date = start_date + datetime.timedelta(days=365 * 2)
+        end_date = start_date + datetime.timedelta(days=365 * 5)
         if frequency == "once":
             self._frequency.append(start_date)
         else:
@@ -73,33 +82,41 @@ class Event:
                 self._frequency.append(date)
                 
     def add_part(self, admin, participant):
+        '''Добавление участников события.'''
         if admin == self._organizer and isinstance(admin, User) and isinstance(participant, User):
             self._participants.add(participant)
+            participant.notify_added_to_event(self)
         else:
             raise ValueError("Некорректные участники события.")
 
-    
     def del_participants(self,event_name, admin, user):
+        '''Удаление участников события.'''
         if admin == self._organizer and event_name == self._title and user in self._participants:
             self._participants.remove(user)
         else:
             raise ValueError("Некорректные участники события")
     
-    def participants_leavе(self,user):
-        if user in self._participants and user != self._organizer:
+    def participants_leavе(self, user):
+        '''Выход участника из события.'''
+        if user != self._organizer:
             self._participants.remove(user)
+            print(f"Вы покинули событие {self._title}")
+        else:
+            print("Вы не можете покинуть событие так как являетесь его организатором")
             
     def change_description(self,user, new_description):
+        '''Изменение описания события.'''
         if user == self._organizer and isinstance(user,User):
             self._description = new_description
         else:
-            raise ValueError("Описание не может быть изменено")
+            print("Описание не может быть изменено")
     
     def del_description(self, user):
+        '''Удаление описания события.'''
         if user == self._organizer and isinstance(user, User):
             self._description = None
         else:
-            raise ValueError("Описание не может быть удалено")
+            print("Описание не может быть удалено")
     
     def to_dict(self):
         event_dict = {
@@ -123,12 +140,9 @@ class Event:
         organizer_data = event_dict.get('organizer', {})
         organizer = User.from_dict(organizer_data)
         description = event_dict.get('description')
-        
         participants_data = event_dict.get('participants', [])
         participants = {User.from_dict(participant) for participant in participants_data}
-
         frequency = [datetime.datetime.strptime(dt, "%Y-%m-%d").date() for dt in event_dict.get('frequency', [])]
-        
         event = cls(title, organizer, description)
         event._participants = participants
         event._frequency = frequency
@@ -139,8 +153,18 @@ class Event:
         with open(file, 'r') as f:
             event_dict = json.loads(f.read())
         return cls.from_dict(event_dict)
-        
-       
+    
+    @staticmethod
+    def create_event_from_string(event_string):
+        event_data = [item.strip() for item in event_string.split(',')]
+        title = event_data[0]
+        organizer_data = event_data[1].split(':')
+        organizer_name = organizer_data[1].strip()
+        date_str = event_data[2]
+        date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        return Event(title, organizer_name, date=date)
+    
+
 
 
             

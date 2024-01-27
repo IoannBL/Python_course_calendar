@@ -1,8 +1,8 @@
 import csv
-from User import User
-from Event import Event
+
 class NotificationManager:
     file_notify = 'backend_data_notification.csv'
+    
     def __init__(self):
         self._notifications = []
         
@@ -31,7 +31,6 @@ class NotificationManager:
         except FileNotFoundError:
             self._notifications = []
  
-
     def notify_added_to_event(self, organizer, added_user, remove_user,  event):
         event_title = event.get_title()
         self.notification_add_part(organizer, added_user, remove_user, [event_title])

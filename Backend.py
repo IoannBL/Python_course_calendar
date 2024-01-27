@@ -22,7 +22,6 @@ class Backend:
     file_events = 'backend_data_events.csv'
     file_calendar = 'backend_data_calendar.csv'
   
-
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(Backend, cls).__new__(cls, *args, **kwargs)
@@ -143,7 +142,6 @@ class Backend:
                             participant = next((user for user in self._users if user.get_name() == participant_name),None)
                             if participant:
                                 event.add_part(organizer, participant)
-
                         frequencies = row['frequency'].split(', ')
                         for date_str in frequencies:
                             date = datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -188,10 +186,7 @@ class Backend:
             print(f"Error: Файл не найден - {self.file_calendar}")
         except Exception as e:
             print(f"Error: {e}")
-
-
-   
-    
+  
     def entrance(self, login):
         user_exists = False
         for user in self.get_users():
@@ -209,22 +204,21 @@ class Backend:
         if not user_exists:
             print("Пользователя не существует, выполните вход заново")
             return None
-    
-       
-    def viewing_calendar(self, user):
+        
+    def viewing_calendar(self, user, calendar):
         'Метод выдает календарь пользователя'
-        calendar = Calendar(user)
         for i in self.get_events_user(user):
             calendar.add_event_cal(i)
         calendar_data = calendar.get_calendar()
         for date, events_list in calendar_data.items():
             print(f"Дата: {date.strftime('%Y-%m-%d')}")
             for event in events_list:
-                print(f"  - {event.get_title()}|| Описание:{event.get_description()}||Участники: {event.get_participants()}")
-                
-        return
+                print(f" {event.get_title()}")
+                print(f"Описание: {event.get_description()}")
+                participants = ', '.join(user.get_name() for user in event.get_participants())
+                print(f"Участники: {participants}")
+                print("-------------------------------")
     
- 
     def get_events_user(self, user):
         'Метод выдает список всех событий пользователя'
         events = []
@@ -249,15 +243,26 @@ class Backend:
             print(f"Событие {event_title} удалено.")
         else:
             print(f"Событие {event_title} не найдено.")
-    def add_participants(self,participants_names,new_event,organizer,notify):
-        added_participants = []
-        for participant_name in participants_names:
-            participant = next((user for user in self.get_users() if user.get_id() == participant_name), None)
-            if participant:
-                new_event.add_part(organizer, participant)
-                added_participants.append(participant)
-            else:
-                print(f"Пользователь {participant_name} не найден.")
-        for participant in added_participants:
-            remove_user = None
-            notify.notify_added_to_event(organizer, participant, remove_user, new_event)
+    
+    def selected_event(self,admin, event_title):
+        'Метод ищет событие по имени в списке событий пользователя'
+        selected_event = next((event for event in self.get_events_user(admin) if event.get_title() == event_title), None)
+        return selected_event
+    
+    def selected_event_org(self,admin, event_title):
+        'Метод ищет событие по имени в списке событий пользователя'
+        selected_event = next((event for event in self.get_events_user_org(admin) if event.get_title() == event_title), None)
+        return selected_event
+    
+    def view_the_events_user(self,user):
+        events = self.get_events_user(user)
+        for event in events:
+            print(f"Название: {event.get_title()}")
+            print(f"Описание: {event.get_description()}")
+            participants = ', '.join(user.get_name() for user in event.get_participants())
+            print(f"Участники: {participants}")
+            frequencies = ', '.join(date.strftime("%Y-%m-%d") for date in event.get_frequency_event())
+            print(f"Даты проведения: {frequencies}")
+            print()
+    
+        

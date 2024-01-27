@@ -87,14 +87,16 @@ class Event:
             self._participants.add(participant)
             participant.notify_added_to_event(self)
         else:
-            raise ValueError("Некорректные участники события.")
+            print("Введены некоректные данные")
+            # raise ValueError("Некорректные участники события.")
 
     def del_participants(self,event_name, admin, user):
         '''Удаление участников события.'''
-        if admin == self._organizer and event_name == self._title and user in self._participants:
+        if admin == self._organizer and event_name == self._title and user in self._participants and user != self._organizer :
             self._participants.remove(user)
         else:
-            raise ValueError("Некорректные участники события")
+            print("Введены некоректные данные")
+            # raise ValueError("Некорректные участники события")
     
     def participants_leavе(self, user):
         '''Выход участника из события.'''
@@ -108,6 +110,7 @@ class Event:
         '''Изменение описания события.'''
         if user == self._organizer and isinstance(user,User):
             self._description = new_description
+            print(f"Описание события {self} изменено")
         else:
             print("Описание не может быть изменено")
     

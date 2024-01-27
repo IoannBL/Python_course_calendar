@@ -27,6 +27,9 @@ class Calendar:
     def __hash__(self):
         return hash((self._organizer_cal))
     
+    def clear_calendar(self):
+        self._calendar = {}
+        
     def get_calendar(self):
         sorted_calendar = sorted(self._calendar.items(), key=lambda x: x[0])
         return dict(sorted_calendar)
@@ -55,10 +58,17 @@ class Calendar:
         start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
         events_in_range = []
-        sorted_events = sorted(self._calendar.items(), key=lambda x: x[0])
-        for date, events in sorted_events:
-            if start_date <= date <= end_date:
+        for date, events in self._calendar.items():
+            if start_date <= date.date() <= end_date:
                 events_in_range.extend(events)
+        for event in events_in_range:
+            print(f"Название: {event.get_title()}")
+            print(f"Описание: {event.get_description()}")
+            participants = ', '.join(user.get_name() for user in event.get_participants())
+            print(f"Участники: {participants}")
+            frequencies = ', '.join(date.strftime("%Y-%m-%d") for date in event.get_frequency_event())
+            print(f"Даты проведения: {frequencies}")
+            print()
         return events_in_range
 
     def del_event(self, user):
@@ -69,6 +79,7 @@ class Calendar:
     
     def get_events_cal(self):
         return list(self._calendar.values())
-
-
-        
+    
+    def sort_events(self):
+        '''Метод сортирует события в календаре по дате.'''
+        self._calendar = dict(sorted(self._calendar.items(), key=lambda x: x[0]))

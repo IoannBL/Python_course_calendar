@@ -42,7 +42,7 @@ class Interface:
             
     @staticmethod
     def main_menu():
-        i = input("""
+        i = input("""Главное меню
         0)Завершить работу
         1)Создать событие
         2)Добавить в событие пользователей
@@ -51,9 +51,10 @@ class Interface:
         5)Просмотреть все свои события
         6)Покинуть событие
         7)Изменить описание события
-        8)Просмотр Календаря
-        9)Просмотреть уведомления
-        10)Выйти из аккаунта
+        8)Просмотреть события в промежутке дат
+        9)Просмотр Календаря
+        10)Просмотреть уведомления
+        11)Выйти из аккаунта
         """)
         if i == "0":
             Interface.finish()
@@ -66,23 +67,25 @@ class Interface:
         elif i == "4":
             Interface.del_events()
         elif i == "5":
-            print(Interface.backend.get_events_user(Interface.current_user))
+            print(Interface.backend.view_the_events_user(Interface.current_user))
             Interface.main_menu()
         elif i == "6":
-            Interface.leavе_event()
-        elif i =="7":
-            pass
+            Interface.leave_event()
+        elif i == "7":
+            Interface.change_description()
         elif i == "8":
+            Interface.search_event()
+        elif i == "9":
             Interface.view_the_calendar()
             Interface.main_menu()
-        elif i == "9":
-            Interface.notifications()
         elif i == "10":
+            Interface.notifications()
+        elif i == "11":
             Interface.start()
  
     @staticmethod
     def notifications():
-        i = input("""
+        i = input("""Уведомления
         0)Просмотреть все уведомления
         1)Пометить уведомления как прочитанные
         2)Главное меню
@@ -103,6 +106,7 @@ class Interface:
         user = Interface.backend.entrance(login)
         if user:
             Interface.current_user = user
+            Interface.calendar = Calendar(user)
             Interface.main_menu()
         else:
             Interface.start()
@@ -118,24 +122,23 @@ class Interface:
         print("Участники доступные для добавления в событие: ", Interface.backend.get_users())
         participants_str = input("Введите id участников (разделяйте запятыми): ")
         participants_names = [name.strip() for name in participants_str.split(',')]
-        # added_participants = []
-        # for participant_name in participants_names:
-        #     participant = next((user for user in Interface.backend.get_users() if user.get_id() == participant_name), None)
-        #     if participant:
-        #         new_event.add_part(organizer, participant)
-        #         added_participants.append(participant)
-        #     else:
-        #         print(f"Пользователь {participant_name} не найден.")
+        added_participants = []
+        for participant_name in participants_names:
+            participant = next((user for user in Interface.backend.get_users() if user.get_id() == participant_name), None)
+            if participant:
+                new_event.add_part(organizer, participant)
+                added_participants.append(participant)
+            else:
+                print(f"Пользователь {participant_name} не найден.")
         start_date = input("Введите дату начала события (гггг-мм-дд): ")
         frequency = input("Введите частоту события (once, daily, weekly, monthly, yearly): ")
         new_event.create_periodic_event(start_date, frequency)
         print(f"Событие {new_event.get_title} создано.")
         print("Список всех ваших событий: ", Interface.backend.get_events_user(Interface.current_user))
-        # for participant in added_participants:
-        #     remove_user = None
-        #     Interface.notify.notify_added_to_event(organizer, participant, remove_user, new_event)
+        for participant in added_participants:
+            remove_user = None
+            Interface.notify.notify_added_to_event(organizer, participant, remove_user, new_event)
         Interface.notify.save_notifications()
-        
         Interface.main_menu()
   
     @staticmethod
@@ -187,11 +190,11 @@ class Interface:
     @staticmethod
     def remove_users_from_events():
         admin = Interface.current_user
-        name_events = [event.get_title() for event in Interface.backend.get_events_user(admin)]
+        name_events = [event.get_title() for event in Interface.backend.get_events_user_org(admin)]
         print("Введите название события из списка для удаления из него участников ", name_events)
         event_title = input()
-        selected_event = next((event for event in Interface.backend.get_events_user(admin) if event.get_title() == event_title), None)
-        
+       
+        selected_event = Interface.backend.selected_event(admin,event_title)
         if selected_event:
             print("Участники доступные для удаления из события: ", selected_event.get_participants())
             participants_str = input("Введите id участников (разделяйте запятыми): ")
@@ -202,8 +205,6 @@ class Interface:
                 if participant:
                     if participant not in selected_event.get_participants():
                         print(f"Участник {participant.get_name()} отсутствует в событии {event_title}. Пропущен.")
-                        
-          
                     else:
                         selected_event.del_participants(event_title, admin, participant)
                         print(f"Участник {participant.get_name()} Удален из события {event_title}.")
@@ -221,10 +222,6 @@ class Interface:
             print(f"Событие с названием {event_title} не найдено.")
             Interface.main_menu()
         
-    
-    @staticmethod
-    def view_events():
-        pass
     @staticmethod
     def create_new_user():
         username = input("Введите имя пользователя: ")
@@ -263,21 +260,27 @@ class Interface:
         if not found_notifications:
             print("Новых уведомлений не найдено.")
             
-            
-                
-
     @staticmethod
     def mark_notifications_as_read():
         user_to_find = Interface.current_user.get_id()
         Interface.notify.remove_notifications(user_to_find)
         print("Уведомления удалены")
 
-    
-    
     @staticmethod
     def view_the_calendar():
-        Interface.backend.viewing_calendar(Interface.current_user)
-        
+        Interface.backend.viewing_calendar(Interface.current_user, Interface.calendar)
+        Interface.calendar.clear_calendar()
+        Interface.main_menu()
+    @staticmethod
+    def search_event():
+        start_date = input("Введите начальную дату: ")
+        end_date = input("Введите конечную дату: ")
+        for i in Interface.backend.get_events_user(Interface.current_user):
+            Interface.calendar.add_event_cal(i)
+        Interface.calendar.sort_events()
+        Interface.calendar.search_event(start_date, end_date)
+        Interface.calendar.clear_calendar()
+        Interface.main_menu()
     @staticmethod
     def del_events():
         user = Interface.current_user
@@ -287,11 +290,11 @@ class Interface:
         Interface.main_menu()
     
     @staticmethod
-    def leavе_event():
+    def leave_event():
         user = Interface.current_user
         print(Interface.backend.get_events_title_user(user))
         event_name = input("Введите событие из списка которое вы хотите покинуть: ")
-        selected_event = next((event for event in Interface.backend.get_events_user(user) if event.get_title() == event_name), None)
+        selected_event = Interface.backend.selected_event(user,event_name)
         if selected_event:
             selected_event.participants_leavе(user)
             Interface.main_menu()
@@ -300,25 +303,22 @@ class Interface:
             Interface.main_menu()
     @staticmethod
     def change_description():
+        user = Interface.current_user
         print(Interface.backend.get_events_title_user(user))
-        event_name = input("Введите событие из списка которое вы хотите покинуть: ")
-        selected_event = next((event for event in Interface.backend.get_events_user(user) if event.get_title()))
-        pass
-    
+        event_name = input("Введите событие из списка описание которого вы хотите изменить: ")
+        selected_event = Interface.backend.selected_event(Interface.current_user, event_name)
+        desc = input("Введите новое описание события")
+        selected_event.change_description(Interface.current_user,desc)
+        
+        Interface.main_menu()
+        
     @staticmethod
     def finish():
         print("Работа программы завершена.")
         Interface.backend.save_data_events()
         sys.exit(0)
 
-  
-
-
-
 Interface.start()
-# print(Interface.notify.get_notifications())
-# print(Interface.see_calendar())
-# print(Interface.user)
 
 
 

@@ -14,7 +14,7 @@ from Backend import Backend
 from User import User
 from Event import Event
 from Notification import NotificationManager
-class Interface:
+class Interface():
     user = None
     event = None
     calendar = None
@@ -318,7 +318,7 @@ class Interface:
         Interface.backend.save_data_events()
         sys.exit(0)
 
-Interface.start()
+# Interface.start()
 
-
+print(Interface.backend.get_users())
 

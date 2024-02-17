@@ -18,7 +18,9 @@ class User:
         return f"name:{self._login}, id:{self._id}"
     
     def __repr__(self):
-        return f"name:{self._login},id:{self._id}"
+    
+        return self._id
+        # return f"name:{self._login},id:{self._id}"
     
     # @classmethod
     # def create_user(cls):

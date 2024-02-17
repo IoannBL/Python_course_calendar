@@ -318,7 +318,7 @@ class Interface():
         Interface.backend.save_data_events()
         sys.exit(0)
 
-# Interface.start()
+Interface.start()
 
-print(Interface.backend.get_users())
+
 

@@ -82,6 +82,8 @@ class Interface():
             Interface.notifications()
         elif i == "11":
             Interface.start()
+        elif i == "12":
+            Interface.ev()
  
     @staticmethod
     def notifications():
@@ -317,8 +319,20 @@ class Interface():
         print("Работа программы завершена.")
         Interface.backend.save_data_events()
         sys.exit(0)
-
+    
+    
+    @staticmethod
+    def ev():
+        user = Interface.current_user
+        events = Backend.get_events_user(user)
+        return events
 Interface.start()
+b = input()
+a = Interface.backend.get_users()
+
+
+    
+
 
 
 

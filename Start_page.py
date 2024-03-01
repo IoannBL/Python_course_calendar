@@ -1,7 +1,5 @@
 import flet as ft
-import datetime
 
-import sys
 from Calendar import Calendar
 from Backend import Backend
 from User import User
@@ -29,6 +27,7 @@ class Interface(ft.Container):
             gradient=ft.LinearGradient([ft.colors.INDIGO_500, ft.colors.RED_200]),
             alignment=ft.alignment.Alignment(0, 0),
             content=
+            
             ft.Container(
                 ft.Stack([
                     ft.Container(
@@ -50,6 +49,7 @@ class Interface(ft.Container):
                         content=
                         ft.Column([
                             ft.Container(
+                                
                                 content=(ft.Text("Calendar",color=ft.colors.BLUE_800,scale=2,size=10)),
                                 width=300,
                                 height=30,
@@ -86,7 +86,6 @@ class Interface(ft.Container):
                         ],
                     ),
                     )
-
                 ]),
 
                 # alignment=ft.alignment.center,
@@ -320,7 +319,8 @@ class Notification_pr(ft.UserControl):
             # border_radius=10,
             visible=True,
             content=
-            self.notify_1)
+            self.notify_1
+        )
         return self.notify
     
     @staticmethod
@@ -407,7 +407,7 @@ class Event_tab(ft.UserControl):
             self.mm,
             self.dd
         ])
-        
+
         self.data = Interface.backend.get_users()
         self.resultdata = ft.ListView()
         self.resultcon = ft.Container(
@@ -440,7 +440,9 @@ class Event_tab(ft.UserControl):
         self.page.update()
     def on_submit(self,e):
         self.search_now(e)
-        
+        result = self.resultdata.controls
+        print(result)
+        self.page.update()
     def build(self):
         save_event = ft.ElevatedButton("Сохранить",
                                        color="white",
@@ -525,6 +527,16 @@ class Event_tab(ft.UserControl):
             remove_user = None
             Interface.notify.notify_added_to_event(organizer, participant, remove_user, new_event)
         Interface.notify.save_notifications()
+        
+        all_events_controls = self.page.all_event.events_all()
+        
+     
+        self.page.all_event.event_column.controls.clear()
+        
+   
+        for control in all_events_controls:
+            self.page.all_event.event_column.controls.append(control)
+        self.page.update()
         self.dia_ev(self)
         
     def dia_ev(self,e):
@@ -538,14 +550,140 @@ class Event_tab(ft.UserControl):
         self.description_event.value = ""
         self.page.update()
         e.page.show_dialog(show_user)
+
+
+class All_Event(ft.UserControl):
+    def __init__(self, page):
+        super().__init__(self)
+        self.event_column = ft.Column(
+            scroll="always"
+        )
+        self.show_all_event = ft.Container(
+            content=(
+                ft.Container(
+                    self.event_column
+                )
+            ),
+            
+            width=500,
+            height=500,
+            bgcolor='#443366ff',
+            # bgcolor='green',
+            expand=False,
+            visible=True,
+            alignment=ft.alignment.center,
+            border_radius=20,
+            margin=ft.margin.only(left=10),
+            padding=ft.padding.only(left=10, right=10, bottom=10, top=10),
+        )
+    def build(self):
+        if Interface.current_user is not None:
+            all_events = All_Event.events_all(self)
+            self.event_column.controls.append(all_events)
+        else:
+            pass
+        return self.show_all_event
+    
+    def del_events(self, event_name):
+        Interface.backend.remove_events(event_name)
+        for control in self.event_column.controls:
+            if isinstance(control, ft.Container) and control.content.get_title() == event_name:
+                self.event_column.remove_control(control)
+        print(f"Событие {event_name} успешно удалено.")
+    @staticmethod
+    def leave_event():
+        user = Interface.current_user
+        print(Interface.backend.get_events_title_user(user))
+        event_name = input("Введите событие из списка которое вы хотите покинуть: ")
+        selected_event = Interface.backend.selected_event(user, event_name)
+        if selected_event:
+            selected_event.participants_leavе(user)
+            Interface.main_menu()
+        else:
+            print(f"Событие {selected_event} не найдено.")
+            Interface.main_menu()
+    
+    
+    def events_all(self):
+        ev_col = ft.Column(
+        )
+        to_find = Interface.current_user
+        if to_find is not None:
+            events = Interface.backend.get_events_user(to_find)
+            for event in events:
+                participants = ', '.join(user.get_name() for user in event.get_participants())
+                frequencies = ', '.join(date.strftime("%Y-%m-%d") for date in event.get_frequency_event())
+                event_con = ft.Container(
+                    padding=ft.padding.all(10),
+                    border_radius=20,
+                    width=500,
+                    bgcolor='# 33ffffff',
+                    content=(
+                        ft.Row(
+                            controls=[
+                                ft.Container(
+                                    width=320,
+                                    content=ft.Column([
+                                        ft.Text(f"Название: {event.get_title()}", color=ft.colors.BLUE_800, size=20, ),
+                                        ft.Text(f"Описание: {event.get_description()}"),
+                                        ft.Text(f"Участники: {participants}"),
+                                        ft.Text(f"Даты проведения: {frequencies}")
+                                    ]),
+                                ),
+                                
+                                ft.Container(
+                                    # padding= ft.padding.only(right=20),
+                                    # margin=ft.margin.only(left=20),
+                                    height=100,
+                                    width=400,
+                                    # bgcolor='#444ffffff',
+                                    alignment=ft.alignment.top_left,
+                                    content=ft.Column(
+                                        controls=[
+                                            ft.FilledTonalButton("Изменить", icon=ft.icons.CHANGE_CIRCLE_OUTLINED,
+                                                                 on_click=f"",
+                                                                 style=ft.ButtonStyle(
+                                                                     shape=ft.RoundedRectangleBorder(radius=10)),
+                                                                 icon_color=ft.colors.BLUE_800), ft.Container(),
+                                            ft.FilledTonalButton("Удалить", icon=ft.icons.DELETE_OUTLINE,
+                                                                 on_click=lambda event, event_name=event.get_title() : self.del_events(event_name),
+                                                                 # on_click=lambda _: self.,
+                                                                 style=ft.ButtonStyle(
+                                                                     shape=ft.RoundedRectangleBorder(radius=10)),
+                                                                 icon_color=ft.colors.BLUE_800), ft.Container(),
+                                        
+                                        ]
+                                    )
+                                    
+                                    # ft.Icon(name=ft.icons.CHANGE_CIRCLE,
+                                    # color=ft.colors.BLUE_800,size=30),
+                                )
+                            
+                            ]
+                        )
+                    )
+                )
+                ev_col.controls.append(
+                    event_con
+                )
         
+        else:
+            pass
+        return ev_col
+        
+        # self.event_column.controls.append(
+        #     self.event_con
+        # )`
+    
+
 class Main_page(ft.Row):
     """Главная страница приложения"""
     def __init__(self,page: ft.Page,*args,**kwargs):
         super().__init__(*args,**kwargs)
         self.page = page
         self.notification = Notification_pr(self)
-        self.event_tab = Event_tab(self,)
+        self.event_tab = Event_tab(self)
+        self.all_event = All_Event(self)
         self.content_1 = (ft.Container(
             height=1500,
             expand=True,
@@ -643,11 +781,14 @@ class Main_page(ft.Row):
                                     scroll="alwais",
                                     controls=[
                                         self.event_tab,
-                                        self.show_all_event,
+                                        
                                         self.show_calendar
                                     ]
                                 )
                             ),
+                            ft.Container(
+                                self.all_event
+                            )
                         ]),
                     )
                 ],
@@ -659,20 +800,8 @@ class Main_page(ft.Row):
         self.controls = [
             self.content_1
         ]
- 
- 
-    show_all_event = ft.Container(
-        width=500,
-        height=500,
-        # bgcolor='#443366ff',
-        bgcolor='green',
-        expand=True,
-        # visible=True,
-        offset=ft.transform.Offset(-3, 0),
-        animate_offset=ft.animation.Animation(1000),
-        alignment=ft.alignment.center,
-        border_radius=10
-    )
+    
+  
 
     show_calendar = ft.Container(
         width=500,
@@ -698,12 +827,16 @@ class Main_page(ft.Row):
         self.event_tab.visible = not self.event_tab.visible
         self.page.update()
     
+    # def animate_container_show_all_event(self, e):
+    #     if self.show_all_event.offset == ft.transform.Offset(0, 0):
+    #         self.show_all_event.offset = ft.transform.Offset(-3, 0)
+    #     elif self.show_all_event.offset == ft.transform.Offset(-3, 0):
+    #         self.show_all_event.offset = ft.transform.Offset(0, 0)
+    #     self.show_all_event.update()
     def animate_container_show_all_event(self, e):
-        if self.show_all_event.offset == ft.transform.Offset(0, 0):
-            self.show_all_event.offset = ft.transform.Offset(-3, 0)
-        elif self.show_all_event.offset == ft.transform.Offset(-3, 0):
-            self.show_all_event.offset = ft.transform.Offset(0, 0)
-        self.show_all_event.update()
+        self.all_event.visible = not self.all_event.visible
+        self.page.update()
+        
     
     
     def animate_container_show_calendar(self, e):

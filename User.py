@@ -15,8 +15,8 @@ class User:
         self._notification = set()
 
     def __str__(self):
-        return f"name:{self._login}, id:{self._id}"
-    
+        # return f"name:{self._login}, id:{self._id}"
+        return self._id
     def __repr__(self):
     
         return self._id

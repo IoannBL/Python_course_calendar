@@ -8,7 +8,7 @@ class Main(ft.UserControl):
         self.page = page
         page.theme_mode = ft.ThemeMode.LIGHT
         page.window_width = 760
-        page.window_height = 1000
+        page.window_height = 1200
         page.window_resizable = True
         page.window_maximizable = True
         appbar = Interface.navbar(page)

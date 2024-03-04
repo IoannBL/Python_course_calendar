@@ -586,9 +586,8 @@ class All_Event(ft.UserControl):
     
     def del_events(self, event_name):
         Interface.backend.remove_events(event_name)
-        for control in self.event_column.controls:
-            if isinstance(control, ft.Container) and control.content.get_title() == event_name:
-                self.event_column.remove_control(control)
+        # container.parent.remove_control(container)
+        self.update()
         print(f"Событие {event_name} успешно удалено.")
     @staticmethod
     def leave_event():
@@ -646,7 +645,7 @@ class All_Event(ft.UserControl):
                                                                      shape=ft.RoundedRectangleBorder(radius=10)),
                                                                  icon_color=ft.colors.BLUE_800), ft.Container(),
                                             ft.FilledTonalButton("Удалить", icon=ft.icons.DELETE_OUTLINE,
-                                                                 on_click=lambda event, event_name=event.get_title() : self.del_events(event_name),
+                                                                 on_click=lambda event, event_name=event.get_title():self.del_events(event_name),
                                                                  # on_click=lambda _: self.,
                                                                  style=ft.ButtonStyle(
                                                                      shape=ft.RoundedRectangleBorder(radius=10)),
